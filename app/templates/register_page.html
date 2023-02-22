@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register Page</h2>
+    {% if msg %}
+    <p>{{msg}}</p>
+    {% endif %}
+    <form id="form-section">
+        <p>Email:</p>
+        <input type="email" name="email">
+        <p>Password:</p>
+        <input type="password" name="password">
+        <button type="submit">SignUP</button>
+    </form>
+    <br>
+    <a href="{{url_for('user.loginGet')}}">Already signUp</a>
+    <script>
+        const formSection = document.getElementById('form-section');
+        formSection.addEventListener('submit', register)
+
+        async function register(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(formSection)
+            const response = await fetch('/user/register', fetchOptions(formData));
+            const result = await response.json();
+            if( result.msg === 'Register successfully' )
+                return location.assign(`http://127.0.0.1:5555/user/login?msg=${result.msg}`)
+            else
+                return location.href = `http://127.0.0.1:5555/user/register?msg=${result.msg}`;
+        }
+
+        const fetchOptions = (argPutInBody) => {
+            return {
+                method: 'post',
+                body: argPutInBody,
+            }
+        }
+    </script>
+</body>
+</html>

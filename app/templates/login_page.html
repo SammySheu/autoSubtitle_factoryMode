@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login Page</h2>
+    {% if msg %}
+    <p>{{msg}}</p>
+    {% endif %}
+    <form id="form-section">
+        <p>Email:</p>
+        <input type="email" name="user_email" required> 
+        <p>Password:</p>
+        <input type="password" name="user_password" required>
+        <button type="submit" id="submitBtn">Login</button>
+    </form>
+    <br>
+    <a href="{{url_for('user.registerGet')}}"> Go SignUP</a>
+    <script>
+
+        const formSection = document.getElementById('form-section');
+        formSection.addEventListener('submit', login)
+
+        async function login(e) {
+            e.preventDefault();
+            const formData = new FormData(formSection)
+            const response = await fetch('/user/login', fetchOptions(formData));
+            const result = await response.json();    
+            if( result.msg === 'login successful' )
+                return location.assign('http://127.0.0.1:5555/workshop')
+            else 
+                return location.href = `http://127.0.0.1:5555/user/login?msg=${result.msg}`;
+        }
+        
+        const fetchOptions = (argPutInBody) => {
+            return {
+                method: 'post',
+                body: argPutInBody,
+            }
+        }
+        </script>
+</body>
+</html>

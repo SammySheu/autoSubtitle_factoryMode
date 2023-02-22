@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Upload</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='styles.css')}}">
+</head>
+<body>
+    <div class="app">
+        <div class="form-section">
+            <form action="{{url_for('workshop.upload')}}" id="upload-section" method="POST" enctype="multipart/form-data">
+                <input type="file" id="file" name="file_from_user" accept="video/mp4" required>
+                <input type="submit" value="Upload">
+            </form>
+            <br>
+            <br>
+            <form class="downloadBTN">
+                <input type="submit" name="" value="Download Test File">
+            </form>
+        </div>
+        <div class="files-section" id="unsubtitle-section">
+            <h3 style="margin: 1rem auto;">Un-subtitled File</h3>
+            {% for user_video in user_videos %}
+                {% set filePath = user_video[0].split('/') %}
+                {% set fileDirectory = filePath[1] %}
+                {% set fileName = filePath[2] %}
+                {% set srtExist = user_video[1] %}
+                <div class="single-video">
+                    <video src="{{ url_for('display_files', fileDirectory=fileDirectory, fileName=fileName) }}" controls preload="preload"></video>
+                    {% if srtExist %}
+                        <form action="{{ url_for('workshop.add_subtitles') }}" class="add-button" method="POST">
+                            <input type="submit" name="generate-subtitles" value="Edit Subtitles">
+                        </form>
+                        <form action="{{ url_for('workshop.merge_subtitles') }}" class="merge-button" id="mergeButton" method="POST">
+                            <input type="submit" name="merge-subtitles" value="Merge Subtitles">
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('workshop.add_subtitles') }}" class="add-button" method="POST">
+                            <input type="submit" name="generate-subtitles" value="Create Subtitles">
+                        </form>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="files-section" id="subtitle-section">
+            <h3 style="margin: 1rem auto;">Subtitled File</h3>
+            {% for workshop_video in workshop_videos %}
+                {% set filePath1 = workshop_video[0].split('/') %}
+                {% set fileDirectory1 = filePath1[1] %}
+                {% set fileName1 = filePath1[2] %}
+                <div class="single-video">
+                    <video src="{{ url_for('display_files', fileDirectory=fileDirectory1, fileName=fileName1) }}" controls preload="preload"></video>
+                    <!-- <form action="{{ url_for('workshop.add_subtitles') }}" class="update-button" method="POST">
+                        <input type="submit" name="generate-subtitles" value="Update Subtitles">
+                    </form>
+                    <form action="{{ url_for('workshop.merge_subtitles') }}" class="merge-button" id="mergeButton" method="POST">
+                        <input type="submit" name="merge-subtitles" value="Merge Subtitles">
+                    </form> -->
+                    <form class="downloadBTN">
+                        <input type="submit" value="Download Video">
+                    </form>
+                    <form class="downloadBTN">
+                        <input type="submit" value="Download Srt">
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <form id="logout" action="/logout" method="POST">
+        <button type="submit">Logout</button>
+    </form>
+    <script>
+        const uploadSection = document.getElementById('upload-section')
+        uploadSection.addEventListener('submit', upload)
+        
+        const unsubSection = document.getElementById('unsubtitle-section')
+        unsubSection.addEventListener('submit', createSubtitle)
+        unsubSection.addEventListener('submit', mergeSubtitle)
+        
+        // const subSection = document.getElementById('subtitle-section')
+        // subSection.addEventListener('submit', updateSubtitle)
+        // subSection.addEventListener('submit', mergeSubtitle)
+
+        const logoutSection = document.getElementById('logout')
+        logoutSection.addEventListener('submit', logout)
+
+        const downloadSection = document.querySelectorAll('.downloadBTN')
+        for(let i=0; i < downloadSection.length ; i++){
+            downloadSection[i].addEventListener('submit', download)
+        }
+        // downloadSection.addEventListener('submit', async (e) => {
+        //     e.preventDefault()
+        //     console.log(e.target.value)
+        //     return location.assign('http://127.0.0.1:5555/serve-file/testFile/test_video.mp4')
+        // })
+        
+        async function download(e){
+            e.preventDefault()
+            switcher = e.target.querySelector('input').value
+            if(switcher == "Download Test File")
+                return location.assign('http://127.0.0.1:5555/serve-file/testFile/test_video.mp4')
+            else if(switcher == "Download Video"){
+                videoPath = e.target.parentNode.querySelector('video').src
+                console.log(videoPath)
+                return location.assign(videoPath)
+            }
+            else if(switcher == 'Download Srt'){
+                videoPath = e.target.parentNode.querySelector('video').src
+                srtPath = videoPath.replace('/workshopFiles', '/srtFiles')
+                srtPath = srtPath.replace('.mp4', '.srt')
+                console.log(srtPath)
+                return location.assign(srtPath)
+            }
+        }
+
+        async function upload(e){
+            e.preventDefault();
+            const userFile = document.getElementById('file').files[0];
+            const formData = new FormData();
+            formData.append('file_from_user', userFile)
+            const response = await fetch('http://127.0.0.1:5555/workshop/upload-video', fetchOptions(formData));
+            const result = await response.json()
+            if(result.msg == 'Upload successfully')
+                return location.reload()
+        }
+
+        async function createSubtitle(e){
+            e.preventDefault();
+            if (e.target.className == 'merge-button')
+                return ;
+            videoName = e.target.parentNode.querySelector('video').src
+            video_path = videoName.slice(33)
+            console.log(video_path)
+            const response = await fetch('http://127.0.0.1:5555/workshop/add-subtitles', fetchOptions(JSON.stringify(video_path)));
+            const result = await response.json()
+            return window.location.href = `http://127.0.0.1:5555/workshop/edit-subtitles/${video_path}`;
+        }
+
+        async function mergeSubtitle(e){
+            e.preventDefault();
+            console.log(e.target.className)
+            if (e.target.className == 'add-button' | e.target.className == 'update-button')
+                return ;
+            videoName = e.target.parentNode.querySelector('video').src
+            video_path = videoName.slice(33)
+            await fetch('http://127.0.0.1:5555/workshop/merge-subtitles', fetchOptions(JSON.stringify(video_path)));
+            return window.location.href = `http://127.0.0.1:5555/workshop`;
+        }
+
+        async function updateSubtitle(e){
+            e.preventDefault();
+            console.log(e.target.className)
+            if (e.target.className == 'merge-button')
+                return ;
+            videoName = e.target.parentNode.querySelector('video').src
+            video_path = videoName.slice(33)
+            return window.location.href = `http://127.0.0.1:5555/workshop/edit-subtitles/${video_path}`;
+        }
+
+        async function logout(e){
+            e.preventDefault();
+            const response = await fetch('http://127.0.0.1:5555/user/logout', {method: "POST"});
+            console.log(response)
+            return location.href = `http://127.0.0.1:5555/user/login?msg=Logout successful`;
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2)
+                return parts.pop().split(';').shift();
+        }
+        const fetchOptions = (argPutInBody) => {
+            return {
+                method: 'post',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+                },
+            body: argPutInBody,
+            }
+        }
+        </script>
+</body>
+</html>

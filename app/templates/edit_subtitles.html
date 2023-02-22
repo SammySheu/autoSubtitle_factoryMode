@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Page</title>
+    <link rel="stylesheet" href="/static/styleForEdit.css">
+</head>
+<body>
+    <div class="video-section">
+        {% set filePath = videoPath.split('/') %}
+        {% set fileDirectory = filePath[0] %}
+        {% set fileName = filePath[1] %}
+        <video src="{{ url_for('display_files', fileDirectory=fileDirectory, fileName=fileName) }}" controls preload="preload"></video>
+    </div>
+    <form id="form" action="/workshop/update-subtitles", method="POST">
+        {% for line in lines %}
+        <div class="line-card">
+            <p>
+                {{line[1]}}
+            </p>
+            <p>
+                lines: 
+                <input class="singleLines" type="text" name="{{loop.index}}" value="{{line[2]}}" style="width: 30rem">
+            </p>
+        </div>
+        {% endfor %}
+        <button type="submit">Create</button>
+    </form>
+    <script>
+        const formNode = document.getElementById('form')
+        formNode.addEventListener('submit', updateSubtitle)
+        
+        async function updateSubtitle(e){
+            e.preventDefault();
+            const videoNode = document.querySelector("body > div > video").src
+            const videoPath = videoNode.slice(33)
+            const formData = new FormData(formNode)
+            formData.append('video_path', videoPath)
+            await fetch('/workshop/update-subtitles', fetchOptions(formData))
+            return location.assign('http://127.0.0.1:5555/workshop')
+        }
+        const fetchOptions = (argPutInBody) => {
+            return {
+                method: 'post',
+                // credentials: 'same-origin',
+                // headers: {
+                //     'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+                // },
+            body: argPutInBody,
+            }
+        }
+    </script>
+</body>
+</html>

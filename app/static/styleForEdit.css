@@ -1,0 +1,19 @@
+.line-card{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: 70rem;
+    margin: auto;
+    margin-bottom: 1rem;
+    border-radius: 0.8rem;
+    /* padding: 3rem 4rem 2rem; */
+    padding: 1rem 1rem 1rem;
+    background: white;
+    box-shadow: 0 3px 7px #00577759;
+  }
+video{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50rem;
+}
